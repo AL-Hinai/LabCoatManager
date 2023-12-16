@@ -1,0 +1,28 @@
+{% extends 'labcoat/base.html' %}
+
+{% block title %}
+Add Lab Coat Stock
+{% endblock %}
+
+{% block header %}
+Add Lab Coat to Stock
+{% endblock %}
+
+{% block content %}
+<form method="post" class="form-inline">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="size" class="mr-2">Size:</label>
+        <select name="size" id="size" class="form-control mr-2">
+            {% for size, size_display in sizes %}
+            <option value="{{ size }}">{{ size_display }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="quantity" class="mr-2">Quantity:</label>
+        <input type="number" id="quantity" name="quantity" min="1" class="form-control mr-2">
+    </div>
+    <button type="submit" class="btn btn-primary">Add Stock</button>
+</form>
+{% endblock %}

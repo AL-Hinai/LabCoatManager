@@ -1,0 +1,39 @@
+{% extends 'labcoat/base.html' %}
+
+{% block title %}
+Staff Lab Coat Distributions
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Lab Coat Distributions for Staff</h1>
+    <form method="get" class="form-inline my-2">
+        <input type="text" name="search" placeholder="Search by Name or ID" value="{{ query }}" class="form-control mr-2">
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Size</th>
+                <th>Quantity</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for distribution in distributions %}
+            <tr>
+                <td>{{ distribution.user_id }}</td>
+                <td>{{ distribution.name }}</td>
+                <td>{{ distribution.email }}</td>
+                <td>{{ distribution.size }}</td>
+                <td>{{ distribution.quantity }}</td>
+                <td>{{ distribution.date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends 'labcoat/base.html' %}
+
+{% block title %}
+Distribute Lab Coat
+{% endblock %}
+
+{% block content %}
+<form method="post" action="{% url 'distribute_lab_coat' %}" class="form-horizontal" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- Size -->
+    <div class="form-group row">
+        <label for="size" class="col-sm-2 col-form-label">Size:</label>
+        <div class="col-sm-10">
+            <select name="size" id="size" class="form-control">
+                {% for size_dict in sizes %}
+                <option value="{{ size_dict.size }}">{{ size_dict.size }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Recipient Type -->
+    <div class="form-group row">
+        <label for="recipient_type" class="col-sm-2 col-form-label">Recipient Type:</label>
+        <div class="col-sm-10">
+            <select name="recipient_type" id="recipient_type" class="form-control">
+                <option value="student">Student</option>
+                <option value="staff">Staff</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- User ID -->
+    <div class="form-group row">
+        <label for="user_id" class="col-sm-2 col-form-label">User ID:</label>
+        <div class="col-sm-10">
+            <input type="text" id="user_id" name="user_id" maxlength="10" class="form-control">
+        </div>
+    </div>
+
+    <!-- Name -->
+    <div class="form-group row">
+        <label for="name" class="col-sm-2 col-form-label">Name:</label>
+        <div class="col-sm-10">
+            <input type="text" id="name" name="name" maxlength="255" class="form-control">
+        </div>
+    </div>
+
+    <!-- Email -->
+    <div class="form-group row">
+        <label for="email" class="col-sm-2 col-form-label">Email:</label>
+        <div class="col-sm-10">
+            <input type="email" id="email" name="email" class="form-control">
+        </div>
+    </div>
+
+    <!-- Quantity -->
+    <div class="form-group row">
+        <label for="quantity" class="col-sm-2 col-form-label">Quantity:</label>
+        <div class="col-sm-10">
+            <input type="number" id="quantity" name="quantity" min="1" class="form-control">
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-sm-10">
+            OCR Result:<div id="ocrResult" class="ocr-result"></div>
+        </div>
+    </div>
+    
+
+    <!-- Image Capture -->
+    <div class="form-group row">
+        <label for="imageCapture" class="col-sm-2 col-form-label">Capture Image:</label>
+        <div class="col-sm-10">
+            <input type="file" accept="image/*" capture="camera" id="imageCapture" name="imageCapture" class="form-control-file">
+            <button type="button" id="processOCR" class="btn btn-secondary mt-2">Process OCR</button>
+        </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="form-group row">
+        <div class="col-sm-10">
+            <button type="submit" class="btn btn-primary">Distribute</button>
+        </div>
+    </div>
+</form>
+<a href="{% url 'home_view' %}" class="btn btn-link">Back to Home</a>
+
+<script>
+    document.getElementById('processOCR').addEventListener('click', function() {
+        var formData = new FormData();
+        var imageCapture = document.getElementById('imageCapture');
+        if (imageCapture.files.length > 0) {
+            formData.append('imageCapture', imageCapture.files[0]);
+
+            fetch('{% url "ocr_process_view" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Assuming 'data' contains the OCR results
+                document.getElementById('user_id').value = data.user_id || '';
+                document.getElementById('name').value = data.name || '';
+                document.getElementById('email').value = data.email || '';
+                // Display the complete OCR result
+                var ocrResultElement = document.getElementById('ocrResult');
+                ocrResultElement.textContent = data.ocr_result || 'No result';
+            })
+            .catch(error => {
+                console.error('Error during OCR processing:', error);
+            });
+        } else {
+            alert('Please select an image to process.');
+        }
+    });
+</script>
+
+{% endblock %}

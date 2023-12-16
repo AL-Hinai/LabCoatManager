@@ -1,0 +1,38 @@
+{% extends 'labcoat/base.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lab Coat Management System</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Welcome to the Lab Coat Management System</h1>
+
+        <!-- Links for LabCoatInventory Management -->
+        <div class="mt-4">
+            <h2>Manage Lab Coat Inventory</h2>
+            <a href="{% url 'stock_view' %}" class="btn btn-info mr-2">View Current Stock</a>
+            <a href="{% url 'add_stock_view' %}" class="btn btn-success">Add to Stock</a>
+        </div>
+
+        <!-- Links for LabCoatDistribution Management -->
+        <div class="mt-4">
+            <h2>Manage Lab Coat Distribution</h2>
+            <a href="{% url 'student_distributions_view' %}" class="btn btn-primary mr-2">View Student Distributions</a>
+            <a href="{% url 'staff_distributions_view' %}" class="btn btn-primary mr-2">View Staff Distributions</a>
+            <a href="{% url 'distribute_lab_coat' %}" class="btn btn-warning">Distribute Lab Coats</a>
+        </div>
+    </div>
+
+    <!-- Optional: Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
+
+{% endblock %}
