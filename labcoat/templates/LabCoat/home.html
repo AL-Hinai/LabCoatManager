@@ -12,19 +12,23 @@
     <div class="container mt-4">
         <h1>Welcome to the Lab Coat Management System</h1>
 
-        <!-- Links for LabCoatInventory Management -->
-        <div class="mt-4">
+        <!-- LabCoatInventory Management Links -->
+        <div class="mt-5">
             <h2>Manage Lab Coat Inventory</h2>
-            <a href="{% url 'stock_view' %}" class="btn btn-info mr-2">View Current Stock</a>
-            <a href="{% url 'add_stock_view' %}" class="btn btn-success">Add to Stock</a>
+            <div class="btn-group">
+                <a href="{% url 'stock_view' %}" class="btn btn-info">View Current Stock</a>
+                <a href="{% url 'add_stock_view' %}" class="btn btn-success">Add to Stock</a>
+            </div>
         </div>
 
-        <!-- Links for LabCoatDistribution Management -->
-        <div class="mt-4">
+        <!-- LabCoatDistribution Management Links -->
+        <div class="mt-5">
             <h2>Manage Lab Coat Distribution</h2>
-            <a href="{% url 'student_distributions_view' %}" class="btn btn-primary mr-2">View Student Distributions</a>
-            <a href="{% url 'staff_distributions_view' %}" class="btn btn-primary mr-2">View Staff Distributions</a>
-            <a href="{% url 'distribute_lab_coat' %}" class="btn btn-warning">Distribute Lab Coats</a>
+            <div class="btn-group">
+                <a href="{% url 'student_distributions_view' %}" class="btn btn-primary">View Student Distributions</a>
+                <a href="{% url 'staff_distributions_view' %}" class="btn btn-primary">View Staff Distributions</a>
+                <a href="{% url 'distribute_lab_coat' %}" class="btn btn-warning">Distribute Lab Coats</a>
+            </div>
         </div>
     </div>
 

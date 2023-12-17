@@ -85,12 +85,22 @@ OCR_SPACE_API_KEY = "K89352752688957"
 
 # OCR Helper Functions
 def extract_user_id(ocr_text):
-    user_id_match = re.search(r'ID:\s*?([\w-]+)', ocr_text)
-    return user_id_match.group(1) if user_id_match else None
+    user_id_match = re.search(r'StudentNo:\s*?(\d+)', ocr_text)
+    return user_id_match.group(1) if user_id_match else 'error: user ID not found'
 
 def extract_name(ocr_text):
-    name_match = re.search(r'NAME:\s*?([\w\s-]+)\s*?CLASS', ocr_text)
-    return name_match.group(1) if name_match else None
+    # Split the OCR text by spaces and select the part between "Newcastle" and "StudentNo:"
+    parts = ocr_text.split()
+    start_idx = parts.index("Newcastle") + 1
+    end_idx = parts.index("StudentNo:")
+    name_parts = parts[start_idx:end_idx]
+    
+    # Remove "University" if present in the name parts
+    name_parts = [part for part in name_parts if part.lower() != "university"]
+    
+    name = " ".join(name_parts)
+    return name.strip() if name else 'error: name not found'
+
 
 def extract_email(ocr_text):
     user_id = extract_user_id(ocr_text)
