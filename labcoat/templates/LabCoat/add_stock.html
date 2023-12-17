@@ -5,24 +5,27 @@ Add Lab Coat Stock
 {% endblock %}
 
 {% block header %}
-Add Lab Coat to Stock
+<h2>Add Lab Coat to Stock</h2>
 {% endblock %}
 
 {% block content %}
-<form method="post" class="form-inline">
-    {% csrf_token %}
-    <div class="form-group">
-        <label for="size" class="mr-2">Size:</label>
-        <select name="size" id="size" class="form-control mr-2">
-            {% for size, size_display in sizes %}
-            <option value="{{ size }}">{{ size_display }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="form-group">
-        <label for="quantity" class="mr-2">Quantity:</label>
-        <input type="number" id="quantity" name="quantity" min="1" class="form-control mr-2">
-    </div>
-    <button type="submit" class="btn btn-primary">Add Stock</button>
-</form>
+<div class="container mt-4">
+    <h1 class="my-4">Add Lab Coat to Stock</h1>
+    <form method="post" class="form mt-4">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="size" class="mr-2">Size:</label>
+            <select name="size" id="size" class="form-control mr-2">
+                {% for size, size_display in sizes %}
+                <option value="{{ size }}">{{ size_display }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="quantity" class="mr-2">Quantity:</label>
+            <input type="number" id="quantity" name="quantity" min="1" class="form-control mr-2">
+        </div>
+        <button type="submit" class="btn btn-primary">Add Stock</button>
+    </form>
+</div>
 {% endblock %}

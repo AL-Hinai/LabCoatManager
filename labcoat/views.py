@@ -1,15 +1,13 @@
 from django.shortcuts import render
+import requests
 from .models import LabCoatInventory, LabCoatAddStock, LabCoatDistribution, InventoryUpdate
 from django.http import HttpResponseRedirect
-import pytesseract
 from django.http import JsonResponse
-from django.shortcuts import render
 from PIL import Image
 import plotly.graph_objs as go
 from django.db.models import Q
 import re
 from plotly.offline import plot
-from plotly.graph_objs import Scatter
 from collections import defaultdict
 
 
@@ -82,6 +80,9 @@ def add_stock_view(request):
 
 
 
+# Replace with your OCR.space API key
+OCR_SPACE_API_KEY = "K89352752688957"
+
 # OCR Helper Functions
 def extract_user_id(ocr_text):
     user_id_match = re.search(r'ID:\s*?([\w-]+)', ocr_text)
@@ -101,32 +102,43 @@ def extract_email(ocr_text):
 # OCR Processing API View
 def ocr_process_view(request):
     if request.method == 'POST' and request.FILES.get('imageCapture', None):
-        image = Image.open(request.FILES['imageCapture'])
-        pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-        
+        image = request.FILES['imageCapture']
+
+        # Set up the OCR.space API endpoint URL
+        ocr_space_url = "https://api.ocr.space/parse/image"
+
+        # Define OCR.space API parameters
+        payload = {
+            "apikey": OCR_SPACE_API_KEY,
+            "language": "eng",  # Language code for English
+            "isOverlayRequired": False,  # Disable overlay
+        }
+
+        # Send a POST request to OCR.space API with the image
         try:
-            ocr_result = pytesseract.image_to_string(image, lang='eng')
+            response = requests.post(ocr_space_url, files={"image": image}, data=payload)
+            response_data = response.json()
         except Exception as e:
             return JsonResponse({'error': 'OCR processing failed', 'details': str(e)}, status=500)
 
+        # Check if OCR processing was successful
+        if response_data.get("OCRExitCode") == 1:
+            ocr_result = response_data.get("ParsedResults")[0].get("ParsedText")
 
+            # Extract user_id, name, and email using your existing functions
+            user_id = extract_user_id(ocr_result)
+            name = extract_name(ocr_result)
+            email = extract_email(ocr_result)
 
-        user_id_pattern = r'ID:\s*?([\w-]+)'
-        name_pattern = r'NAME:\s*?([\w\s-]+)\s*?CLASS'
-
-        user_id = re.search(user_id_pattern, ocr_result)
-        name = re.search(name_pattern, ocr_result)
-
-        # Construct the email from the user_id
-        email = f"{user_id.group(1)}@utas.edu.om" if user_id else 'error: email not found'
-
-        response_data = {
-            'ocr_result': ocr_result,
-            'user_id': user_id.group(1) if user_id else 'error: user ID not found',
-            'name': name.group(1) if name else 'error: name not found',
-            'email': email
-        }
-        return JsonResponse(response_data)
+            response_data = {
+                'ocr_result': ocr_result,
+                'user_id': user_id if user_id else 'error: user ID not found',
+                'name': name if name else 'error: name not found',
+                'email': email
+            }
+            return JsonResponse(response_data)
+        else:
+            return JsonResponse({'error': 'OCR processing failed'}, status=500)
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
@@ -141,16 +153,30 @@ def distribute_lab_coat(request):
 
         if request.FILES.get('imageCapture'):
             img = Image.open(request.FILES['imageCapture'])
-            pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-            ocr_result = pytesseract.image_to_string(img, lang='eng')
 
-            user_id = extract_user_id(ocr_result)
-            name = extract_name(ocr_result)
-            email = extract_email(ocr_result)
-        else:
-            user_id = request.POST.get('user_id')
-            name = request.POST.get('name')
-            email = request.POST.get('email')
+            # Send the image to OCR.space API (same code as in ocr_process_view)
+            ocr_space_url = "https://api.ocr.space/parse/image"
+            payload = {
+                "apikey": OCR_SPACE_API_KEY,
+                "language": "eng",
+                "isOverlayRequired": False,
+            }
+            try:
+                response = requests.post(ocr_space_url, files={"image": img}, data=payload)
+                response_data = response.json()
+            except Exception as e:
+                return JsonResponse({'error': 'OCR processing failed', 'details': str(e)}, status=500)
+
+            if response_data.get("OCRExitCode") == 1:
+                ocr_result = response_data.get("ParsedResults")[0].get("ParsedText")
+
+                user_id = extract_user_id(ocr_result)
+                name = extract_name(ocr_result)
+                email = extract_email(ocr_result)
+            else:
+                user_id = request.POST.get('user_id')
+                name = request.POST.get('name')
+                email = request.POST.get('email')
 
         LabCoatDistribution.objects.create(size=size, recipient_type=recipient_type, quantity=quantity, user_id=user_id, name=name, email=email)
         return HttpResponseRedirect('/')

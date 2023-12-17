@@ -7,7 +7,7 @@ Distribute Lab Coat
 {% block content %}
 <form method="post" action="{% url 'distribute_lab_coat' %}" class="form-horizontal" enctype="multipart/form-data">
     {% csrf_token %}
-
+    <h1 class="my-4">Distribute Lab Coat</h1>
     <!-- Size -->
     <div class="form-group row">
         <label for="size" class="col-sm-2 col-form-label">Size:</label>
