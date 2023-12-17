@@ -8,6 +8,11 @@ from PIL import Image
 import plotly.graph_objs as go
 from django.db.models import Q
 import re
+from plotly.offline import plot
+from plotly.graph_objs import Scatter
+from collections import defaultdict
+
+
 
 # Home View
 def home_view(request):
@@ -15,49 +20,53 @@ def home_view(request):
 
 # Stock View
 def stock_view(request):
-    # Query the LabCoatInventory model to get the current inventory data
-    inventory_data = LabCoatInventory.objects.all()
+    # Prepare data for the graph
+    updates_data = defaultdict(list)
 
-    # Prepare data for the line chart
-    chart_data = {
-        'timestamps': [],  # Add your timestamps here from Inventoryupdate
-        'sizes': ['Small', 'Medium', 'Large', 'Extra Large', 'Extra Extra Large'],
-        'data': {
-            'Small': [],
-            'Medium': [],
-            'Large': [],
-            'Extra Large': [],
-            'Extra Extra Large': [],
-        },
-    }
+    # Get all inventory updates ordered by timestamp
+    inventory_updates = InventoryUpdate.objects.all().order_by('timestamp')
 
-    # Fill chart_data with inventory update data
-    inventory_updates = InventoryUpdate.objects.all()
-    for item in inventory_updates:
-        chart_data['timestamps'].append(item.timestamp)
-        chart_data['data'][item.get_size_display()].append(item.quantity_update)
+    for update in inventory_updates:
+        # Append the update quantity and timestamp to updates_data
+        updates_data[update.size].append((update.timestamp, update.quantity_update))
 
-    # Create the Plotly line chart
-    chart = go.Figure()
-
-    for size in chart_data['sizes']:
-        chart.add_trace(go.Scatter(
-            x=chart_data['timestamps'],
-            y=chart_data['data'][size],
+    # Create traces for the graph, one for each size
+    graph_data = []
+    for size, updates in updates_data.items():
+        timestamps, quantities = zip(*updates) if updates else ([], [])
+        size_display = dict(InventoryUpdate.SIZE_CHOICES)[size]
+        graph_data.append(go.Scatter(
+            x=timestamps,
+            y=quantities,
             mode='lines+markers',
-            name=size
+            name=size_display
         ))
 
-    chart.update_layout(
-        title='Lab Coat Inventory Over Time',
-        xaxis_title='Date',
-        yaxis_title='Total Count'
+    # Create the layout for the graph
+    layout = go.Layout(
+        title='Lab Coat Inventory Updates Over Time',
+        xaxis=dict(title='Timestamp'),
+        yaxis=dict(title='Quantity Updated'),
+        showlegend=True
     )
 
-    chart_div = chart.to_html(full_html=False)
+    # Create the figure with data and layout
+    figure = go.Figure(data=graph_data, layout=layout)
 
-    return render(request, 'LabCoat/stock_view.html', {'inventory_data': inventory_data, 'chart_div': chart_div})
+    # Generate the HTML representation of the plot
+    graph_div = plot(figure, output_type='div')
 
+    # Initialize current stock from LabCoatInventory
+    current_stock = {}
+    for inventory in LabCoatInventory.objects.all():
+        size_display = inventory.get_size_display()  # Get the human-readable size name
+        current_stock[size_display] = inventory.total
+
+    # Pass both the graph and current stock data to the template
+    return render(request, 'LabCoat/stock_view.html', {
+        'graph_div': graph_div,
+        'current_stock': current_stock
+    })
 
 
 # Add Stock View
