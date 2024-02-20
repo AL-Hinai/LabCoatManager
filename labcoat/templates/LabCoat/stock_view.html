@@ -1,4 +1,4 @@
-{% extends 'labcoat/base.html' %}
+{% extends 'LabCoat/base.html' %}
 
 {% block title %}
 Current Stock
@@ -8,42 +8,38 @@ Current Stock
 <!-- Include Plotly.js (You may need to update the path to Plotly.js) -->
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
-
-<body>
-    <div class="container mt-4">
-        <h1>Lab Coat Inventory Updates</h1>
-        <!-- This is where the Plotly graph will be rendered -->
-        <div id="graph-container">
-            {{ graph_div|safe }}
-        </div>
+<div class="container mt-4">
+    <h1>Lab Coat Inventory Updates</h1>
+    <!-- This is where the Plotly graph will be rendered -->
+    <div id="graph-container">
+        {{ graph_div|safe }}
     </div>
+</div>
 
 
 
-    <!-- Current Stock Table -->
-    <div class="container mt-4">
-        <h2>Current Inventory</h2>
-
-
-        <table class="table table-hover table-bordered mt-4">
-            <thead class="table">
-            <tr>
-                <th scope="col">Size</th>
-                <th scope="col">Total Count</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for size, total in current_stock.items %}
+<!-- Current Stock Table -->
+<div class="container mt-4">
+    <h2>Current Inventory</h2>
+    <table class="table table-hover table-bordered mt-4">
+        <thead class="table">
+        <tr>
+            <th scope="col">Size</th>
+            <th scope="col">Total Count</th>
+        </tr>
+        </thead>
+        <tbody>
+            {% for item in inventory_data %}
                 <tr>
-                <td><strong>{{ size }}</strong></td>
-                <td>{{ total }}</td>
+                    <td><strong>{{ item.get_size_display }}</strong></td>
+                    <td>{{ item.total }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="2">No inventory data available.</td>
                 </tr>
             {% endfor %}
-            </tbody>
-        </table>
-
-    </div>
-
-  
-
+        </tbody>
+    </table>
+</div>
 {% endblock %}

@@ -1,0 +1,15 @@
+<!-- upload_excel_distribution.html -->
+
+{% extends 'LabCoat/base.html' %}  <!-- Make sure to extend the correct base template -->
+
+{% block content %}
+    <h2>Upload Lab Coat Distribution Data</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="excel_file">Excel File:</label>
+            <input type="file" name="excel_file" id="excel_file" accept=".xlsx, .xls" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Upload</button>
+    </form>
+{% endblock %}

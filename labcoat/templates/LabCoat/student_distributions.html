@@ -1,4 +1,4 @@
-{% extends 'labcoat/base.html' %}
+{% extends 'LabCoat/base.html' %}
 
 {% block title %}
 Student Lab Coat Distributions
@@ -16,7 +16,6 @@ Student Lab Coat Distributions
             <tr>
                 <th>User ID</th>
                 <th>Name</th>
-                <th>Email</th>
                 <th>Size</th>
                 <th>Quantity</th>
                 <th>Date</th>
@@ -27,7 +26,6 @@ Student Lab Coat Distributions
             <tr>
                 <td>{{ distribution.user_id }}</td>
                 <td>{{ distribution.name }}</td>
-                <td>{{ distribution.email }}</td>
                 <td>{{ distribution.size }}</td>
                 <td>{{ distribution.quantity }}</td>
                 <td>{{ distribution.date }}</td>

@@ -1,50 +1,91 @@
-from django.shortcuts import render
-import requests
-from .models import LabCoatInventory, LabCoatAddStock, LabCoatDistribution, InventoryUpdate
-from django.http import HttpResponseRedirect
-from django.http import JsonResponse
-from PIL import Image
+from django.shortcuts import render, redirect
+from django.http import HttpResponseRedirect, HttpResponse
+from django.db.models import Q, Sum
+from django.db import IntegrityError
+from .models import LabCoatInventory, LabCoatAddStock, LabCoatDistribution
 import plotly.graph_objs as go
-from django.db.models import Q
-import re
 from plotly.offline import plot
 from collections import defaultdict
+from datetime import datetime
+from itertools import product
+import pandas as pd
+from django.contrib.auth import authenticate, login, logout
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+
 
 
 
 # Home View
+@login_required
 def home_view(request):
     return render(request, 'LabCoat/home.html')
 
-# Stock View
+# login view
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect(reverse('home_view'))  # Redirect to the home page after successful login
+        else:
+            # Invalid login
+            return render(request, 'LabCoat/login.html', {'error_message': 'Invalid username or password'})
+    else:
+        return render(request, 'LabCoat/login.html')
+
+# logout
+def logout_view(request):
+    logout(request)
+    return redirect(reverse('login'))
+
+
+# stock view
+@login_required
 def stock_view(request):
+    # Fetch all stock additions and distributions
+    stock_additions = LabCoatAddStock.objects.order_by('date')
+    distributions = LabCoatDistribution.objects.order_by('date')
+
+    # Get all unique sizes and dates
+    sizes = set([addition.size for addition in stock_additions]) | set([distribution.size for distribution in distributions])
+    dates = sorted(set([addition.date.date() for addition in stock_additions]) | set([distribution.date for distribution in distributions]))
+
+    # Create a defaultdict to store the cumulative inventory for each size
+    inventory = defaultdict(lambda: defaultdict(int))
+
+    # Initialize inventory for each size and date
+    for size, date in product(sizes, dates):
+        inventory[size][date] = 0
+
+    # Populate inventory with stock additions
+    for addition in stock_additions:
+        inventory[addition.size][addition.date.date()] += addition.quantity
+
+    # Subtract distributions from inventory
+    for distribution in distributions:
+        inventory[distribution.size][distribution.date] -= distribution.quantity
+
+    # Accumulate inventory changes
+    for size in sizes:
+        cumulative_quantity = 0
+        for date in dates:
+            cumulative_quantity += inventory[size][date]
+            inventory[size][date] = cumulative_quantity
+
     # Prepare data for the graph
-    updates_data = defaultdict(list)
-
-    # Get all inventory updates ordered by timestamp
-    inventory_updates = InventoryUpdate.objects.all().order_by('timestamp')
-
-    for update in inventory_updates:
-        # Append the update quantity and timestamp to updates_data
-        updates_data[update.size].append((update.timestamp, update.quantity_update))
-
-    # Create traces for the graph, one for each size
     graph_data = []
-    for size, updates in updates_data.items():
-        timestamps, quantities = zip(*updates) if updates else ([], [])
-        size_display = dict(InventoryUpdate.SIZE_CHOICES)[size]
-        graph_data.append(go.Scatter(
-            x=timestamps,
-            y=quantities,
-            mode='lines+markers',
-            name=size_display
-        ))
+    for size in sizes:
+        size_data = [inventory[size][date] for date in dates]
+        graph_data.append(go.Scatter(x=dates, y=size_data, mode='lines+markers', name=size))
 
     # Create the layout for the graph
     layout = go.Layout(
-        title='Lab Coat Inventory Updates Over Time',
-        xaxis=dict(title='Timestamp'),
-        yaxis=dict(title='Quantity Updated'),
+        title='Lab Coat Inventory Over Time',
+        xaxis=dict(title='Date'),
+        yaxis=dict(title='Total Quantity'),
         showlegend=True
     )
 
@@ -54,20 +95,24 @@ def stock_view(request):
     # Generate the HTML representation of the plot
     graph_div = plot(figure, output_type='div')
 
-    # Initialize current stock from LabCoatInventory
-    current_stock = {}
-    for inventory in LabCoatInventory.objects.all():
-        size_display = inventory.get_size_display()  # Get the human-readable size name
-        current_stock[size_display] = inventory.total
+    # Fetch total inventory for each size from LabCoatInventory
+    inventory_data = LabCoatInventory.objects.all()
 
-    # Pass both the graph and current stock data to the template
-    return render(request, 'LabCoat/stock_view.html', {
+    # Prepare the context with all necessary data
+    context = {
         'graph_div': graph_div,
-        'current_stock': current_stock
-    })
+        'inventory_data': inventory_data,
+        # Add any other context data needed for your template
+    }
+
+    return render(request, 'LabCoat/stock_view.html', context)
+
+
+
 
 
 # Add Stock View
+@login_required
 def add_stock_view(request):
     if request.method == 'POST':
         size = request.POST.get('size')
@@ -76,82 +121,6 @@ def add_stock_view(request):
         return HttpResponseRedirect('/')
     return render(request, 'LabCoat/add_stock.html', {'sizes': LabCoatInventory.SIZE_CHOICES})
 
-
-
-
-
-# Replace with your OCR.space API key
-OCR_SPACE_API_KEY = "K89352752688957"
-
-# OCR Helper Functions
-def extract_user_id(ocr_text):
-    user_id_match = re.search(r'StudentNo:\s*?(\d+)', ocr_text)
-    return user_id_match.group(1) if user_id_match else 'error: user ID not found'
-
-def extract_name(ocr_text):
-    # Split the OCR text by spaces and select the part between "Newcastle" and "StudentNo:"
-    parts = ocr_text.split()
-    start_idx = parts.index("Newcastle") + 1
-    end_idx = parts.index("StudentNo:")
-    name_parts = parts[start_idx:end_idx]
-    
-    # Remove "University" if present in the name parts
-    name_parts = [part for part in name_parts if part.lower() != "university"]
-    
-    name = " ".join(name_parts)
-    return name.strip() if name else 'error: name not found'
-
-
-def extract_email(ocr_text):
-    user_id = extract_user_id(ocr_text)
-    if user_id:
-        return f"{user_id}@utas.edu.om"
-    else:
-        return 'error: email not found'
-
-# OCR Processing API View
-def ocr_process_view(request):
-    if request.method == 'POST' and request.FILES.get('imageCapture', None):
-        image = request.FILES['imageCapture']
-
-        # Set up the OCR.space API endpoint URL
-        ocr_space_url = "https://api.ocr.space/parse/image"
-
-        # Define OCR.space API parameters
-        payload = {
-            "apikey": OCR_SPACE_API_KEY,
-            "language": "eng",  # Language code for English
-            "isOverlayRequired": False,  # Disable overlay
-        }
-
-        # Send a POST request to OCR.space API with the image
-        try:
-            response = requests.post(ocr_space_url, files={"image": image}, data=payload)
-            response_data = response.json()
-        except Exception as e:
-            return JsonResponse({'error': 'OCR processing failed', 'details': str(e)}, status=500)
-
-        # Check if OCR processing was successful
-        if response_data.get("OCRExitCode") == 1:
-            ocr_result = response_data.get("ParsedResults")[0].get("ParsedText")
-
-            # Extract user_id, name, and email using your existing functions
-            user_id = extract_user_id(ocr_result)
-            name = extract_name(ocr_result)
-            email = extract_email(ocr_result)
-
-            response_data = {
-                'ocr_result': ocr_result,
-                'user_id': user_id if user_id else 'error: user ID not found',
-                'name': name if name else 'error: name not found',
-                'email': email
-            }
-            return JsonResponse(response_data)
-        else:
-            return JsonResponse({'error': 'OCR processing failed'}, status=500)
-
-    return JsonResponse({'error': 'Invalid request'}, status=400)
-
 # Main View for Distributing Lab Coats
 def distribute_lab_coat(request):
     sizes = LabCoatInventory.objects.values('size').distinct()
@@ -159,49 +128,32 @@ def distribute_lab_coat(request):
     if request.method == 'POST':
         size = request.POST.get('size')
         recipient_type = request.POST.get('recipient_type')
-        quantity = int(request.POST.get('quantity'))
+        quantity = int(request.POST.get('quantity', 0))
+        distribution_date = request.POST.get('distribution_date', datetime.today().strftime('%Y-%m-%d'))
 
-        if request.FILES.get('imageCapture'):
-            img = Image.open(request.FILES['imageCapture'])
+        # Convert the distribution date from string to datetime.date object
+        try:
+            distribution_date = datetime.strptime(distribution_date, '%Y-%m-%d').date()
+        except ValueError:
+            distribution_date = datetime.today().date()
 
-            # Send the image to OCR.space API (same code as in ocr_process_view)
-            ocr_space_url = "https://api.ocr.space/parse/image"
-            payload = {
-                "apikey": OCR_SPACE_API_KEY,
-                "language": "eng",
-                "isOverlayRequired": False,
-            }
-            try:
-                response = requests.post(ocr_space_url, files={"image": img}, data=payload)
-                response_data = response.json()
-            except Exception as e:
-                return JsonResponse({'error': 'OCR processing failed', 'details': str(e)}, status=500)
+        user_id = request.POST.get('user_id', '')
+        name = request.POST.get('name', '')
 
-            if response_data.get("OCRExitCode") == 1:
-                ocr_result = response_data.get("ParsedResults")[0].get("ParsedText")
-
-                user_id = extract_user_id(ocr_result)
-                name = extract_name(ocr_result)
-                email = extract_email(ocr_result)
-            else:
-                user_id = request.POST.get('user_id')
-                name = request.POST.get('name')
-                email = request.POST.get('email')
-
-        LabCoatDistribution.objects.create(size=size, recipient_type=recipient_type, quantity=quantity, user_id=user_id, name=name, email=email)
+        LabCoatDistribution.objects.create(
+            size=size,
+            recipient_type=recipient_type,
+            quantity=quantity,
+            user_id=user_id,
+            name=name,
+            date=distribution_date  # Use the provided or default date
+        )
         return HttpResponseRedirect('/')
 
     return render(request, 'LabCoat/distribute_lab_coat.html', {'sizes': sizes})
 
-
-
-
-
-
-
-
-
 # View for Students Distribute
+@login_required
 def student_distributions_view(request):
     query = request.GET.get('search', '')
     distributions = LabCoatDistribution.objects.filter(recipient_type='student').filter(
@@ -210,6 +162,7 @@ def student_distributions_view(request):
     return render(request, 'LabCoat/student_distributions.html', {'distributions': distributions, 'query': query})
 
 # View for Staff Distribute
+@login_required
 def staff_distributions_view(request):
     query = request.GET.get('search', '')
     distributions = LabCoatDistribution.objects.filter(recipient_type='staff').filter(
@@ -217,13 +170,14 @@ def staff_distributions_view(request):
     )
     return render(request, 'LabCoat/staff_distributions.html', {'distributions': distributions, 'query': query})
 
+@login_required
 def lab_coat_stock_chart(request):
-    # Retrieve data from LabCoatInventory model
-    inventory_data = LabCoatInventory.objects.all()
-    
+    # Retrieve data from LabCoatAddStock and LabCoatDistribution models
+    add_stock_data = LabCoatAddStock.objects.values('size').annotate(total_quantity=Sum('quantity'))
+    distribution_data = LabCoatDistribution.objects.values('size').annotate(total_quantity=Sum('quantity'))
+
     # Prepare data for the line chart
     chart_data = {
-        'timestamps': [],  # Add your timestamps here
         'sizes': ['Small', 'Medium', 'Large', 'Extra Large', 'Extra Extra Large'],
         'data': {
             'Small': [],
@@ -233,10 +187,69 @@ def lab_coat_stock_chart(request):
             'Extra Extra Large': [],
         },
     }
-    
+
     # Fill chart_data with inventory data
-    for item in inventory_data:
-        chart_data['timestamps'].append(item.date)  # Add your timestamp field
-        chart_data['data'][item.get_size_display()].append(item.total)
-    
-    return render(request, 'labcoat/lab_coat_stock_chart.html', {'chart_data': chart_data})
+    for size in chart_data['sizes']:
+        # Retrieve total add stock quantity for the size
+        add_stock_quantity = add_stock_data.filter(size=size).values('total_quantity').first()
+        add_stock_quantity = add_stock_quantity['total_quantity'] if add_stock_quantity else 0
+
+        # Retrieve total distribution quantity for the size
+        distribution_quantity = distribution_data.filter(size=size).values('total_quantity').first()
+        distribution_quantity = distribution_quantity['total_quantity'] if distribution_quantity else 0
+
+        # Calculate total inventory quantity
+        total_quantity = add_stock_quantity - distribution_quantity
+
+        chart_data['data'][size].append(total_quantity)
+
+    return render(request, 'LabCoat/lab_coat_stock_chart.html', {'chart_data': chart_data})
+
+
+
+@login_required
+def upload_excel_distribution(request):
+    if request.method == 'POST' and request.FILES:
+        excel_file = request.FILES['excel_file']
+
+        # Read the Excel file
+        df = pd.read_excel(excel_file, engine='openpyxl')
+
+        # Process each row
+        for _, row in df.iterrows():
+            user_id = row['user_id']
+            name = row['name']
+            size = row['size']
+            recipient_type = row['recipient_type']
+            quantity = int(row['quantity'])
+            date = pd.to_datetime(row['date']).date()
+
+            try:
+                # Attempt to get the LabCoatDistribution object using the unique criteria
+                distribution_obj, created = LabCoatDistribution.objects.get_or_create(
+                    user_id=user_id,
+                    size=size,
+                    date=date,
+                    defaults={
+                        'name': name,
+                        'recipient_type': recipient_type,
+                        'quantity': quantity
+                    }
+                )
+
+                # Check if the object was created or already existed
+                if created:
+                    # Object was created, handle updates to inventory or other actions here
+                    pass
+                else:
+                    # Object already existed, handle any updates or other logic here
+                    pass
+            except IntegrityError as e:
+                # Handle any database integrity errors, such as duplicate entries
+                pass
+
+        return HttpResponse("Excel file processed successfully")
+
+    # Render the template for GET requests
+    return render(request, 'LabCoat/upload_excel_distribution.html')
+
