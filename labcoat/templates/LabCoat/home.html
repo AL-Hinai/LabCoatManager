@@ -1,41 +1,67 @@
 {% extends 'LabCoat/base.html' %}
 
+{% block title %}
+Current Stock
+{% endblock %}
+
 {% block content %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Lab Coat Management System</title>
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Coat Management Dashboard</title>
+    <!-- Plotly CDN -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
-    <div class="container mt-4">
-        <h1>Welcome to the Lab Coat Management System</h1>
+    <h1>Lab Coat Management Dashboard</h1>
 
-        <!-- LabCoatInventory Management Links -->
-        <div class="mt-5">
-            <h2>Manage Lab Coat Inventory</h2>
-            <div class="btn-group">
-                <a href="{% url 'stock_view' %}" class="btn btn-info">View Current Stock</a>
-                <a href="{% url 'add_stock_view' %}" class="btn btn-success">Add to Stock</a>
-            </div>
-        </div>
+    <!-- Lab Coat Inventory Overview -->
+    <h2>Lab Coat Inventory Overview</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Size</th>
+                <th>Total Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in inventory_summary %}
+            <tr>
+                <td>{{ item.size }}</td>
+                <td>{{ item.total_quantity }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
-        <!-- LabCoatDistribution Management Links -->
-        <div class="mt-5">
-            <h2>Manage Lab Coat Distribution</h2>
-            <div class="btn-group">
-                <a href="{% url 'student_distributions_view' %}" class="btn btn-primary">View Student Distributions</a>
-                <a href="{% url 'staff_distributions_view' %}" class="btn btn-primary">View Staff Distributions</a>
-                <a href="{% url 'distribute_lab_coat' %}" class="btn btn-warning">Distribute Lab Coats</a>
-            </div>
-        </div>
+    <!-- Distribution Summary -->
+    <h2>Distribution Summary</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Recipient Type</th>
+                <th>Quantity</th>
+                <th>Distribution Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for distribution in distribution_summary %}
+            <tr>
+                <td>{{ distribution.recipient_type }}</td>
+                <td>{{ distribution.quantity }}</td>
+                <td>{{ distribution.date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Graphical Representation of Data -->
+    <h2>Lab Coat Inventory Graph</h2>
+    <div id="graph-container">
+        {{ graph_div|safe }}
     </div>
-
-    <!-- Optional: Bootstrap JS, Popper.js, and jQuery -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
 

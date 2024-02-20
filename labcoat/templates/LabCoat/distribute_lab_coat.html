@@ -5,78 +5,56 @@ Distribute Lab Coat
 {% endblock %}
 
 {% block content %}
-<form method="post" action="{% url 'distribute_lab_coat' %}" class="form-horizontal" enctype="multipart/form-data">
-    {% csrf_token %}
-    <h1 class="my-4">Distribute Lab Coat</h1>
-    <!-- Size -->
-    <div class="form-group row">
-        <label for="size" class="col-sm-2 col-form-label">Size:</label>
-        <div class="col-sm-10">
-            <select name="size" id="size" class="form-control">
-                {% for size_dict in sizes %}
-                <option value="{{ size_dict.size }}">{{ size_dict.size }}</option>
-                {% endfor %}
-            </select>
+<div class="container-fluid">
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title fw-semibold mb-4">Distribute Lab Coat</h5>
+                <div class="card">
+                    <div class="card-body">
+                        <form method="post" action="{% url 'distribute_lab_coat' %}" class="row g-3">
+                            {% csrf_token %}
+                            <div class="col-md-6">
+                                <label for="size" class="form-label">Size</label>
+                                <select name="size" id="size" class="form-select">
+                                    {% for size_dict in sizes %}
+                                    <option value="{{ size_dict.size }}">{{ size_dict.size }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="recipient_type" class="form-label">Recipient Type</label>
+                                <select name="recipient_type" id="recipient_type" class="form-select">
+                                    <option value="student">Student</option>
+                                    <option value="staff">Staff</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="user_id" class="form-label">User ID</label>
+                                <input type="text" id="user_id" name="user_id" maxlength="10" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">Name</label>
+                                <input type="text" id="name" name="name" maxlength="255" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="quantity" class="form-label">Quantity</label>
+                                <input type="number" id="quantity" name="quantity" min="1" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="distribution_date" class="form-label">Distribution Date</label>
+                                <input type="date" id="distribution_date" name="distribution_date" class="form-control">
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">Distribute</button>
+                                <a href="{% url 'upload_excel_distribution' %}" class="btn btn-secondary">Upload Excel Sheet</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-
-    <!-- Recipient Type -->
-    <div class="form-group row">
-        <label for="recipient_type" class="col-sm-2 col-form-label">Recipient Type:</label>
-        <div class="col-sm-10">
-            <select name="recipient_type" id="recipient_type" class="form-control">
-                <option value="student">Student</option>
-                <option value="staff">Staff</option>
-            </select>
-        </div>
-    </div>
-
-    <!-- User ID -->
-    <div class="form-group row">
-        <label for="user_id" class="col-sm-2 col-form-label">User ID:</label>
-        <div class="col-sm-10">
-            <input type="text" id="user_id" name="user_id" maxlength="10" class="form-control">
-        </div>
-    </div>
-
-    <!-- Name -->
-    <div class="form-group row">
-        <label for="name" class="col-sm-2 col-form-label">Name:</label>
-        <div class="col-sm-10">
-            <input type="text" id="name" name="name" maxlength="255" class="form-control">
-        </div>
-    </div>
-
-    <!-- Quantity -->
-    <div class="form-group row">
-        <label for="quantity" class="col-sm-2 col-form-label">Quantity:</label>
-        <div class="col-sm-10">
-            <input type="number" id="quantity" name="quantity" min="1" class="form-control">
-        </div>
-    </div>
-
-    <!-- Date Selection -->
-    <div class="form-group row">
-        <label for="distribution_date" class="col-sm-2 col-form-label">Date:</label>
-        <div class="col-sm-10">
-            <input type="date" id="distribution_date" name="distribution_date" class="form-control">
-        </div>
-    </div>
-
-    <!-- Submit Button -->
-    <div class="form-group row">
-        <div class="col-sm-10">
-            <button type="submit" class="btn btn-primary">Distribute</button>
-        </div>
-    </div>
-
-    <!-- Hyperlink Button to Upload Excel -->
-<div class="form-group row">
-    <div class="col-sm-10">
-        <a href="{% url 'upload_excel_distribution' %}" class="btn btn-secondary">Upload Excel Sheet</a>
     </div>
 </div>
 
-</form>
-<a href="{% url 'home_view' %}" class="btn btn-link">Back to Home</a>
 {% endblock %}

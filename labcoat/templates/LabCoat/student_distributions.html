@@ -5,33 +5,41 @@ Student Lab Coat Distributions
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1 class="my-4">Lab Coat Distributions for Students</h1>Lab Coat Distributions for Students</h1>
-    <form method="get" class="form-inline my-2">
-        <input type="text" name="search" placeholder="Search by Name or ID" value="{{ query }}" class="form-control mr-2">
-        <button type="submit" class="btn btn-primary">Search</button>
-    </form>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>User ID</th>
-                <th>Name</th>
-                <th>Size</th>
-                <th>Quantity</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for distribution in distributions %}
-            <tr>
-                <td>{{ distribution.user_id }}</td>
-                <td>{{ distribution.name }}</td>
-                <td>{{ distribution.size }}</td>
-                <td>{{ distribution.quantity }}</td>
-                <td>{{ distribution.date }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title fw-semibold mb-4">Lab Coat Distributions for Students</h5>
+            <form method="get" class="form-inline mb-4">
+                <div class="input-group">
+                    <input type="search" name="search" placeholder="Search by Name or ID" value="{{ query }}" class="form-control mr-sm-2">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </div>
+            </form>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Name</th>
+                            <th>Size</th>
+                            <th>Quantity</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for distribution in distributions %}
+                        <tr>
+                            <td>{{ distribution.user_id }}</td>
+                            <td>{{ distribution.name }}</td>
+                            <td>{{ distribution.size }}</td>
+                            <td>{{ distribution.quantity }}</td>
+                            <td>{{ distribution.date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

@@ -5,41 +5,45 @@ Current Stock
 {% endblock %}
 
 {% block content %}
-<!-- Include Plotly.js (You may need to update the path to Plotly.js) -->
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
-<div class="container mt-4">
-    <h1>Lab Coat Inventory Updates</h1>
-    <!-- This is where the Plotly graph will be rendered -->
-    <div id="graph-container">
-        {{ graph_div|safe }}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title fw-semibold mb-4">Lab Coat Inventory Updates</h5>
+            <!-- This is where the Plotly graph will be rendered -->
+            <div id="graph-container">
+                {{ graph_div|safe }}
+            </div>
+        </div>
     </div>
 </div>
 
-
-
-<!-- Current Stock Table -->
-<div class="container mt-4">
-    <h2>Current Inventory</h2>
-    <table class="table table-hover table-bordered mt-4">
-        <thead class="table">
-        <tr>
-            <th scope="col">Size</th>
-            <th scope="col">Total Count</th>
-        </tr>
-        </thead>
-        <tbody>
-            {% for item in inventory_data %}
-                <tr>
-                    <td><strong>{{ item.get_size_display }}</strong></td>
-                    <td>{{ item.total }}</td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="2">No inventory data available.</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="container-fluid">
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title fw-semibold mb-4">Current Inventory</h5>
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered mt-4">
+                    <thead>
+                        <tr>
+                            <th scope="col">Size</th>
+                            <th scope="col">Total Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in inventory_data %}
+                            <tr>
+                                <td><strong>{{ item.get_size_display }}</strong></td>
+                                <td>{{ item.total }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="2">No inventory data available.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

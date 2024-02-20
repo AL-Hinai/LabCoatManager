@@ -1,15 +1,30 @@
-<!-- upload_excel_distribution.html -->
+{% extends 'LabCoat/base.html' %}
 
-{% extends 'LabCoat/base.html' %}  <!-- Make sure to extend the correct base template -->
+{% block title %}
+Upload Lab Coat Distribution Data
+{% endblock %}
 
 {% block content %}
-    <h2>Upload Lab Coat Distribution Data</h2>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="excel_file">Excel File:</label>
-            <input type="file" name="excel_file" id="excel_file" accept=".xlsx, .xls" class="form-control">
+<div class="container-fluid">
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title fw-semibold mb-4">Upload Lab Coat Distribution Data</h5>
+                {% if error_message %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error_message }}
+                </div>
+                {% endif %}
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="excel_file" class="form-label">Excel File</label>
+                        <input type="file" name="excel_file" id="excel_file" accept=".xlsx, .xls" class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </form>
+            </div>
         </div>
-        <button type="submit" class="btn btn-primary">Upload</button>
-    </form>
+    </div>
+</div>
 {% endblock %}

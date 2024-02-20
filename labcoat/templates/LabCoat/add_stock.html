@@ -9,23 +9,27 @@ Add Lab Coat Stock
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1 class="my-4">Add Lab Coat to Stock</h1>
-    <form method="post" class="form mt-4">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="size" class="mr-2">Size:</label>
-            <select name="size" id="size" class="form-control mr-2">
-                {% for size, size_display in sizes %}
-                <option value="{{ size }}">{{ size_display }}</option>
-                {% endfor %}
-            </select>
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title fw-semibold mb-4">Add Lab Coat to Stock</h5>
+            <form method="post" class="form">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="size" class="form-label">Size:</label>
+                    <select name="size" id="size" class="form-control">
+                        {% for size, size_display in sizes %}
+                        <option value="{{ size }}">{{ size_display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">Quantity:</label>
+                    <input type="number" id="quantity" name="quantity" min="1" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-primary">Add Stock</button>
+            </form>
         </div>
-        <div class="form-group">
-            <label for="quantity" class="mr-2">Quantity:</label>
-            <input type="number" id="quantity" name="quantity" min="1" class="form-control mr-2">
-        </div>
-        <button type="submit" class="btn btn-primary">Add Stock</button>
-    </form>
+    </div>
 </div>
 {% endblock %}

@@ -12,6 +12,11 @@ import pandas as pd
 from django.contrib.auth import authenticate, login, logout
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.http import HttpResponse
+import pandas as pd
+from django.db import IntegrityError
+from .models import LabCoatDistribution
 
 
 
@@ -19,7 +24,7 @@ from django.contrib.auth.decorators import login_required
 # Home View
 @login_required
 def home_view(request):
-    return render(request, 'LabCoat/home.html')
+    return redirect('stock_view')
 
 # login view
 def login_view(request):
@@ -208,47 +213,56 @@ def lab_coat_stock_chart(request):
 
 
 @login_required
+@login_required
 def upload_excel_distribution(request):
     if request.method == 'POST' and request.FILES:
         excel_file = request.FILES['excel_file']
 
-        # Read the Excel file
-        df = pd.read_excel(excel_file, engine='openpyxl')
+        try:
+            # Read the Excel file
+            df = pd.read_excel(excel_file, engine='openpyxl')
 
-        # Process each row
-        for _, row in df.iterrows():
-            user_id = row['user_id']
-            name = row['name']
-            size = row['size']
-            recipient_type = row['recipient_type']
-            quantity = int(row['quantity'])
-            date = pd.to_datetime(row['date']).date()
+            # Process each row
+            for _, row in df.iterrows():
+                user_id = row['user_id']
+                name = row['name']
+                size = row['size']
+                recipient_type = row['recipient_type']
+                quantity = int(row['quantity'])
+                date = pd.to_datetime(row['date']).date()
 
-            try:
-                # Attempt to get the LabCoatDistribution object using the unique criteria
-                distribution_obj, created = LabCoatDistribution.objects.get_or_create(
-                    user_id=user_id,
-                    size=size,
-                    date=date,
-                    defaults={
-                        'name': name,
-                        'recipient_type': recipient_type,
-                        'quantity': quantity
-                    }
-                )
+                try:
+                    # Attempt to get the LabCoatDistribution object using the unique criteria
+                    distribution_obj, created = LabCoatDistribution.objects.get_or_create(
+                        user_id=user_id,
+                        size=size,
+                        date=date,
+                        defaults={
+                            'name': name,
+                            'recipient_type': recipient_type,
+                            'quantity': quantity
+                        }
+                    )
 
-                # Check if the object was created or already existed
-                if created:
-                    # Object was created, handle updates to inventory or other actions here
+                    # Check if the object was created or already existed
+                    if created:
+                        # Object was created, handle updates to inventory or other actions here
+                        pass
+                    else:
+                        # Object already existed, handle any updates or other logic here
+                        pass
+                except IntegrityError as e:
+                    # Handle any database integrity errors, such as duplicate entries
                     pass
-                else:
-                    # Object already existed, handle any updates or other logic here
-                    pass
-            except IntegrityError as e:
-                # Handle any database integrity errors, such as duplicate entries
-                pass
 
-        return HttpResponse("Excel file processed successfully")
+            # If no error, return success message along with rendering the template
+            success_message = "Excel file processed successfully"
+            return render(request, 'LabCoat/upload_excel_distribution.html', {'success_message': success_message})
+        
+        except Exception as e:
+            # If an error occurs during processing, return error message along with rendering the template
+            error_message = f'Error: {e}'
+            return render(request, 'LabCoat/upload_excel_distribution.html', {'error_message': error_message})
 
     # Render the template for GET requests
     return render(request, 'LabCoat/upload_excel_distribution.html')
